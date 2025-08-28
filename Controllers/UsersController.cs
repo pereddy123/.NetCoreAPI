@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WorkSphereAPI.DTOs;
 using WorkSphereAPI.Services.Interfaces;
@@ -11,10 +12,14 @@ namespace WorkSphereAPI.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IMapper _mapper;
+        private readonly ILogger<UsersController> _logger;
 
-        public UsersController(IUserService userService)
+        public UsersController(IUserService userService, IMapper mapper, ILogger<UsersController> logger)
         {
             _userService = userService;
+            _mapper = mapper;
+            _logger = logger;
         }
 
         // GET: /api/users
@@ -24,27 +29,35 @@ namespace WorkSphereAPI.Controllers
             var users = await _userService.GetAllUsersAsync();
             return Ok(users);
         }
-
         [HttpPost]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var result = await _userService.CreateUserAsync(request);
-            if (!result)
+            var createdUser = await _userService.CreateUserAsync(request);
+
+            if (createdUser == null)
                 return Conflict("User already exists.");
 
-            return Ok("User created successfully.");
+            var userDto = _mapper.Map<UserDto>(createdUser);
+            _logger.LogInformation("User created with ID: {UserId}", userDto.Id);
+            return Ok(userDto);
         }
 
+
+      
+    
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequest request)
         {
-            var success = await _userService.UpdateUserAsync(id, request);
-            if (!success)
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var updated = await _userService.UpdateUserAsync(id, request);
+            if (updated == null)
                 return NotFound("User not found.");
 
-            return Ok("User updated successfully.");
+            return Ok(updated); 
         }
 
         [HttpDelete("{id}")]
@@ -54,7 +67,8 @@ namespace WorkSphereAPI.Controllers
             if (!success)
                 return NotFound("User not found.");
 
-            return Ok("User deleted successfully.");
+         
+            return Ok(new { message = "User deleted successfully." });
         }
 
     }

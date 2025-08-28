@@ -5,13 +5,23 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using WorkSphereAPI.Data;
 using WorkSphereAPI.Helpers;
+using WorkSphereAPI.Mappings;
 using WorkSphereAPI.Repositories.Implementations;
 using WorkSphereAPI.Repositories.Interfaces;
 using WorkSphereAPI.Services.Implementations;
 using WorkSphereAPI.Services.Interfaces;
+using Serilog;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add Serilog configuration
+builder.Host.UseSerilog((context, services, configuration) =>
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+);
 
 builder.Services.AddCors(options =>
 {
@@ -95,7 +105,7 @@ builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<ITaskCommentRepository, TaskCommentRepository>();
 builder.Services.AddScoped<ITaskCommentService, TaskCommentService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
-
+builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

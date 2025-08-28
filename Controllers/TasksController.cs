@@ -109,6 +109,20 @@ namespace WorkSphereAPI.Controllers
             return Ok(result);
         }
 
+        [HttpPut("{id}/fields")]
+        [Authorize(Roles = "Employee")]
+        public async Task<IActionResult> UpdateTaskFields(int id, [FromBody] UpdateTaskFieldsRequest request)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out int userId))
+                return Unauthorized();
+
+            var updated = await _taskService.UpdateTaskFieldsAsync(id, userId, request);
+            if (!updated)
+                return NotFound("Task not found or access denied.");
+
+            return Ok(new { message = "Task status updated" });
+        }
 
 
     }

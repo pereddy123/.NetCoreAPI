@@ -1,9 +1,10 @@
 ﻿namespace WorkSphereAPI.DTOs
 {
-    public class UpdateUserRequest
+    public class CreateUserDto
     {
         public string Username { get; set; }
-        public string Password { get; set; } // optional
+        public string Password { get; set; }
         public string Role { get; set; }
     }
+
 }

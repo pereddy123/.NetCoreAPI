@@ -11,6 +11,7 @@ namespace WorkSphereAPI.Services.Interfaces
      
         Task<bool> UpdateTaskStatusAsync(int taskId, int userId, string newStatus);
 
+        Task<bool> UpdateTaskFieldsAsync(int taskId, int userId, UpdateTaskFieldsRequest request);
 
     }
 }

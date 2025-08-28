@@ -1,4 +1,5 @@
-﻿using WorkSphereAPI.DTOs;
+﻿using Microsoft.EntityFrameworkCore;
+using WorkSphereAPI.DTOs;
 using WorkSphereAPI.Models;
 using WorkSphereAPI.Repositories.Interfaces;
 using WorkSphereAPI.Services.Interfaces;
@@ -82,6 +83,19 @@ namespace WorkSphereAPI.Services.Implementations
 
             task.Status = newStatus;
             _taskRepository.Update(task);
+            return await _taskRepository.SaveChangesAsync();
+        }
+        public async Task<bool> UpdateTaskFieldsAsync(int taskId, int userId, UpdateTaskFieldsRequest request)
+        {
+            var task = await _taskRepository.GetByIdAsync(taskId);
+            if (task == null || task.AssignedToUserId != userId) return false;
+
+            task.Status = request.Status;
+            task.Progress = request.Progress;
+            task.Comment = request.Comment;
+
+            _taskRepository.Update(task);
+
             return await _taskRepository.SaveChangesAsync();
         }
 

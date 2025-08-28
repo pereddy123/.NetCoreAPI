@@ -13,6 +13,17 @@ namespace WorkSphereAPI.Data
 
         public DbSet<TaskComment> TaskComments { get; set; }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<TaskItem>()
+                .HasOne(t => t.AssignedToUser)
+                .WithMany()
+                .HasForeignKey(t => t.AssignedToUserId)
+                .OnDelete(DeleteBehavior.Restrict); // ✅ Prevent multiple cascade paths
+        }
+
 
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using AutoMapper;
+using System.Text;
 using WorkSphereAPI.DTOs;
 using WorkSphereAPI.Models;
 using WorkSphereAPI.Repositories.Interfaces;
@@ -9,9 +10,11 @@ namespace WorkSphereAPI.Services.Implementations
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IMapper _mapper;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, IMapper mapper)
         {
+            _mapper = mapper;
             _userRepository = userRepository;
         }
 
@@ -27,33 +30,41 @@ namespace WorkSphereAPI.Services.Implementations
                 Role = u.Role
             });
         }
-        public async Task<bool> CreateUserAsync(CreateUserRequest request)
+
+        public async Task<User> CreateUserAsync(CreateUserRequest request)
         {
-            var userExists = (await _userRepository.GetAllAsync())
+            var existingUser = (await _userRepository.GetAllAsync())
                 .Any(u => u.Username.ToLower() == request.Username.ToLower());
 
-            if (userExists) return false;
+            if (existingUser) return null;
 
             var user = new User
             {
                 Username = request.Username,
-                PasswordHash = Convert.ToBase64String(Encoding.UTF8.GetBytes(request.Password)), // Simple PoC hash
+                PasswordHash = Convert.ToBase64String(Encoding.UTF8.GetBytes(request.Password)),
                 Role = request.Role
             };
 
             await _userRepository.AddAsync(user);
-            return await _userRepository.SaveChangesAsync();
+            await _userRepository.SaveChangesAsync();
+
+            return user;
         }
-        public async Task<bool> UpdateUserAsync(int id, UpdateUserRequest request)
+
+        public async Task<UserDto> UpdateUserAsync(int id, UpdateUserRequest request)
         {
             var user = await _userRepository.GetByIdAsync(id);
-            if (user == null) return false;
+            if (user == null) return null;
 
-            user.Username = request.Username;
+            if (!string.IsNullOrWhiteSpace(request.Password))
+            {
+                user.PasswordHash = Convert.ToBase64String(Encoding.UTF8.GetBytes(request.Password));
+            }
+
             user.Role = request.Role;
+            await _userRepository.SaveChangesAsync();
 
-            _userRepository.Update(user);
-            return await _userRepository.SaveChangesAsync();
+            return _mapper.Map<UserDto>(user);
         }
         public async Task<bool> DeleteUserAsync(int id)
         {

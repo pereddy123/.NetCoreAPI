@@ -16,6 +16,8 @@ namespace WorkSphereAPI.Repositories.Interfaces
         Task AddAsync(TaskItem task);
         void Update(TaskItem task);
         Task<bool> SaveChangesAsync();
+      
+
 
     }
 }

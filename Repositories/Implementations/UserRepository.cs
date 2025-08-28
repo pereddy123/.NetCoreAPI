@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using WorkSphereAPI.Data;
 using WorkSphereAPI.Models;
 using WorkSphereAPI.Repositories.Interfaces;
@@ -34,6 +35,15 @@ namespace WorkSphereAPI.Repositories.Implementations
         public async Task AddAsync(User user)
         {
             await _context.Users.AddAsync(user);
+        }
+        public async Task<User> CreateAsync(User user, string password)
+        {
+            var hasher = new PasswordHasher<User>();
+            user.PasswordHash = hasher.HashPassword(user, password);
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+            return user;
         }
 
         public void Update(User user)
