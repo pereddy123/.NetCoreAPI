@@ -30,8 +30,11 @@ namespace WorkSphereAPI.Repositories.Implementations
         }
         public async Task<User?> GetByUsernameAsync(string username)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+            return await _context.Users.FirstOrDefaultAsync(u =>
+                u.Username.Trim().ToLower() == username.Trim().ToLower()
+            );
         }
+
         public async Task AddAsync(User user)
         {
             await _context.Users.AddAsync(user);

@@ -11,7 +11,9 @@ namespace WorkSphereAPI.Repositories.Interfaces
         Task<User?> GetByIdAsync(int id);
 
             Task<User?> GetByUsernameAsync(string username);
-            Task AddAsync(User user);
+    
+
+        Task AddAsync(User user);
         Task<User> CreateAsync(User user, string password);
 
         void Update(User user);

@@ -14,7 +14,6 @@ namespace WorkSphereAPI.Mappings
             CreateMap<TaskItem, TaskDto>()
            .ForMember(dest => dest.AssignedToUsername, opt => opt.MapFrom(src => src.AssignedToUser.Username));
 
-            CreateMap<TaskDto, TaskItem>();
         }
     }
 }

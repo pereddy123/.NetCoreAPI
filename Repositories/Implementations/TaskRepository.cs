@@ -63,7 +63,22 @@ namespace WorkSphereAPI.Repositories.Implementations
         {
             return await _context.SaveChangesAsync() > 0;
         }
-    
+
+        public async Task<bool> UpdateTaskFieldsAsync(int id, int userId, string status, int progress, string comment)
+        {
+            var task = await _context.Tasks
+                .Where(t => t.Id == id && t.AssignedToUserId == userId)
+                .FirstOrDefaultAsync();
+
+            if (task == null)
+                return false;
+
+            _context.Entry(task).Property("Status").CurrentValue = status;
+            _context.Entry(task).Property("Progress").CurrentValue = progress;
+            _context.Entry(task).Property("Comment").CurrentValue = comment;
+
+            return await _context.SaveChangesAsync() > 0;
+        }
 
     }
 }

@@ -1,6 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using WorkSphereAPI.DTOs;
 using WorkSphereAPI.Models;
+using WorkSphereAPI.Repositories.Implementations;
 using WorkSphereAPI.Repositories.Interfaces;
 using WorkSphereAPI.Services.Interfaces;
 
@@ -9,10 +11,13 @@ namespace WorkSphereAPI.Services.Implementations
     public class TaskService : ITaskService
     {
         private readonly ITaskRepository _taskRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IMapper _mapper;
 
-        public TaskService(ITaskRepository taskRepository)
+        public TaskService(ITaskRepository taskRepository, IUserRepository _userRepository, IMapper mapper)
         {
             _taskRepository = taskRepository;
+            _mapper = mapper;
         }
 
         public async Task<IEnumerable<TaskDto>> GetAllTasksAsync()
@@ -32,15 +37,7 @@ namespace WorkSphereAPI.Services.Implementations
         public async Task<IEnumerable<TaskDto>> GetTasksByUserIdAsync(int userId)
         {
             var tasks = await _taskRepository.GetByAssignedUserIdAsync(userId);
-            return tasks.Select(t => new TaskDto
-            {
-                Id = t.Id,
-                Title = t.Title,
-                Description = t.Description,
-                Status = t.Status,
-                AssignedToUsername = t.AssignedToUser?.Username ?? "Unassigned",
-                DueDate = t.DueDate
-            });
+            return _mapper.Map<IEnumerable<TaskDto>>(tasks);
         }
 
         public async Task<TaskDto?> GetTaskByIdAsync(int id)
@@ -74,7 +71,6 @@ namespace WorkSphereAPI.Services.Implementations
             return await _taskRepository.SaveChangesAsync();
         }
 
-  
         public async Task<bool> UpdateTaskStatusAsync(int taskId, int userId, string newStatus)
         {
             var task = await _taskRepository.GetByIdAsync(taskId);
@@ -85,20 +81,10 @@ namespace WorkSphereAPI.Services.Implementations
             _taskRepository.Update(task);
             return await _taskRepository.SaveChangesAsync();
         }
+
         public async Task<bool> UpdateTaskFieldsAsync(int taskId, int userId, UpdateTaskFieldsRequest request)
         {
-            var task = await _taskRepository.GetByIdAsync(taskId);
-            if (task == null || task.AssignedToUserId != userId) return false;
-
-            task.Status = request.Status;
-            task.Progress = request.Progress;
-            task.Comment = request.Comment;
-
-            _taskRepository.Update(task);
-
-            return await _taskRepository.SaveChangesAsync();
+            return await _taskRepository.UpdateTaskFieldsAsync(taskId, userId, request.Status, request.Progress, request.Comment ?? "");
         }
-
-
     }
 }
