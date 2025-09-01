@@ -4,6 +4,7 @@ using System.Security.Claims;
 using WorkSphereAPI.DTOs;
 using WorkSphereAPI.Repositories.Interfaces;
 using WorkSphereAPI.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace WorkSphereAPI.Controllers
 {
@@ -15,15 +16,18 @@ namespace WorkSphereAPI.Controllers
         private readonly ITaskService _taskService;
         private readonly ITaskCommentService _taskCommentService;
         private readonly IUserRepository _userRepository;
+        private readonly ILogger<TasksController> _logger;
 
         public TasksController(
             ITaskService taskService,
             ITaskCommentService taskCommentService,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            ILogger<TasksController> logger)
         {
             _taskService = taskService;
             _taskCommentService = taskCommentService;
             _userRepository = userRepository;
+            _logger = logger;
         }
 
     
@@ -54,12 +58,20 @@ namespace WorkSphereAPI.Controllers
         [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> CreateTask([FromBody] CreateTaskRequest request)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+            {
+                _logger.LogWarning("Invalid model state for CreateTask: {@Request}", request);
+                return BadRequest(ModelState);
+            }
 
             var success = await _taskService.CreateTaskAsync(request);
             if (!success)
+            {
+                _logger.LogError("Failed to create task: {@Request}", request);
                 return BadRequest("Could not create task.");
+            }
 
+            _logger.LogInformation("Task created: {@Request}", request);
             return Ok(new { message = "Task created successfully" });
 
         }

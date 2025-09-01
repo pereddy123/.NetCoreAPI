@@ -26,18 +26,26 @@ namespace WorkSphereAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsers()
         {
+            _logger.LogInformation("Fetching all users.");
             var users = await _userService.GetAllUsersAsync();
             return Ok(users);
         }
         [HttpPost]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+            {
+                _logger.LogWarning("Invalid model state for CreateUser: {@Request}", request);
+                return BadRequest(ModelState);
+            }
 
             var createdUser = await _userService.CreateUserAsync(request);
 
             if (createdUser == null)
+            {
+                _logger.LogWarning("Attempt to create duplicate user: {Username}", request.Username);
                 return Conflict("User already exists.");
+            }
 
             var userDto = _mapper.Map<UserDto>(createdUser);
             _logger.LogInformation("User created with ID: {UserId}", userDto.Id);
